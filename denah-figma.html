@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b32">
+  <title>RuangTemu UNESA — Reservasi Ruangan</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- QR Code generator (CDN, tidak butuh install) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#beranda" aria-label="RuangTemu Beranda">
+      <span class="brand-mark">RT</span>
+      <span><strong>RuangTemu</strong><small>UNESA · Ruang belajar bersama</small></span>
+    </a>
+    <div class="topbar-right">
+      <span class="demo-pill"><i></i> Live · MySQL</span>
+      <!-- Login bar -->
+      <div class="session-bar" id="sessionBar">
+        <button class="session-login-btn" id="sessionLoginBtn" onclick="openLoginDialog()">🔑 Masuk / Daftar</button>
+        <div class="session-user hidden" id="sessionUser">
+          <span id="sessionNimLabel">—</span>
+          <button class="session-ticket-btn" id="openMyTickets" onclick="openMyTickets()">🎟️ Tiket Saya</button>
+          <button class="session-logout-btn" onclick="logoutSession()">Keluar</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" id="beranda">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">RUANG BELAJAR KAMPUS</p>
+        <h1>Temukan ruang.<br><span>Mulai kolaborasi.</span></h1>
+        <p class="hero-description">Cek ketersediaan ruang belajar dan diskusi tanpa perlu mencari satu per satu.</p>
+      </div>
+      <div class="hero-stat"><span class="stat-icon">⌖</span><div><strong id="availableCount">—</strong><small>ruang tersedia sekarang</small></div></div>
+    </section>
+
+    <section class="search-tools" aria-label="Pencarian ruangan">
+      <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Cari nama atau kode ruangan…" autocomplete="off"></label>
+      <button class="filter-open-button" id="openFilter" type="button"><span aria-hidden="true">☷</span><span>Filter ruangan</span><span class="filter-count hidden" id="filterCount">0</span></button>
+    </section>
+
+    <section class="map-section">
+      <div class="section-title">
+        <div><p class="eyebrow">PETA INTERAKTIF</p><h2>Denah ruangan</h2><p class="muted">Pilih ruangan pada denah untuk melihat detail dan jadwalnya.</p></div>
+        <div class="legend"><span><i class="available"></i>Tersedia</span><span><i class="occupied"></i>Sedang digunakan</span><span><i class="selected-dot"></i>Dipilih</span></div>
+      </div>
+      <div class="map-wrap"><div class="map" id="campusMap">
+        <div class="corridor"><svg viewBox="0 0 487 402" preserveAspectRatio="none" aria-hidden="true"><polygon points="70,9 120,9 120,239 293,239 293,134 369,134 369,29 423,29 423,393 369,393 369,335 293,335 293,288 210,288 210,393 130,393 130,288 120,288 120,393 70,393"/></svg></div>
+        <button class="room room-b301" data-room="B301">B301</button><button class="room room-b302" data-room="B302">B302</button><button class="room room-b303" data-room="B303">B303</button><button class="room room-b304" data-room="B304">B304</button><button class="room room-b305" data-room="B305">B305</button>
+        <button class="room room-b306" data-room="B306">B306</button><button class="room room-b307" data-room="B307">B307</button>
+        <button class="room room-b308" data-room="B308">B308</button><button class="room room-b309" data-room="B309">B309</button><button class="room room-b310" data-room="B310">B310</button><button class="room room-b311" data-room="B311">B311</button><button class="room room-b312" data-room="B312">B312</button>
+      </div></div>
+      <div class="map-foot"><span><span class="pulse-dot"></span> Status dihitung dari jadwal bertimestamp</span><span id="mapDateTime">Memuat waktu…</span></div>
+    </section>
+
+    <section class="room-results"><div class="results-heading"><div><p class="eyebrow">PILIH RUANGAN</p><h2>Daftar ruangan</h2></div><span class="result-count" id="resultCount">12 ruangan</span></div><div class="room-grid" id="roomGrid"></div><p class="empty-state hidden" id="emptyState">Ruangan tidak ditemukan. Coba ubah kata kunci atau filter.</p></section>
+    <p class="prototype-note">RuangTemu UNESA · Data ruangan, jadwal mingguan, dan reservasi tersimpan di MySQL. Backend: Express.js port 5000.</p>
+  </main>
+
+  <!-- ── Filter ── -->
+  <div class="filter-overlay" id="filterOverlay"></div>
+  <section class="filter-dialog" id="filterDialog" role="dialog" aria-modal="true" aria-labelledby="filterTitle" aria-hidden="true">
+    <button class="close-btn filter-close" id="filterClose" type="button" aria-label="Tutup filter">×</button>
+    <p class="eyebrow">SESUAIKAN PENCARIAN</p>
+    <h2 id="filterTitle">Filter ruangan</h2>
+    <p class="muted filter-description">Pilih beberapa fasilitas sekaligus. Ruangan harus memiliki semua fasilitas yang dipilih.</p>
+    <fieldset class="filter-options"><legend>Fasilitas</legend>
+      <label><input type="checkbox" name="facility" value="ac"> AC</label>
+      <label><input type="checkbox" name="facility" value="wifi"> WiFi</label>
+      <label><input type="checkbox" name="facility" value="proyektor"> Proyektor</label>
+      <label><input type="checkbox" name="facility" value="whiteboard"> Whiteboard</label>
+    </fieldset>
+    <fieldset class="filter-options status-options"><legend>Status ruangan</legend>
+      <label><input type="checkbox" name="roomStatus" value="tersedia"> Tersedia sekarang</label>
+      <label><input type="checkbox" name="roomStatus" value="penuh"> Sedang digunakan</label>
+    </fieldset>
+    <div class="filter-actions"><button class="secondary-btn" id="clearFilters" type="button">Hapus filter</button><button class="booking-btn" id="applyFilters" type="button">Terapkan filter</button></div>
+  </section>
+
+  <!-- ── Room panel ── -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="room-panel" id="roomPanel" aria-labelledby="roomName" aria-hidden="true">
+    <button class="close-btn" id="closeBtn" aria-label="Tutup detail">×</button>
+    <div class="room-photo"><img id="roomImage" src="" alt="Foto ruangan"><span id="roomStatus" class="status-badge"></span><span class="photo-label">RUANGTEMU · UNESA</span></div>
+    <div class="room-content"><p class="room-code" id="roomCode"></p><h2 id="roomName"></h2><p class="muted" id="roomDescription">Ruang belajar dan diskusi mahasiswa.</p>
+      <div class="capacity"><span class="capacity-icon">♧</span><span id="roomCapacity"></span><span class="capacity-divider"></span><span id="roomScheduleSummary">Jadwal dimuat…</span></div>
+      <h3>Fasilitas</h3><div class="facilities" id="facilities"></div>
+      <div class="schedule-heading"><h3>Jadwal hari ini</h3><span class="small-note">Waktu lokal WIB</span></div><div class="schedule-list" id="scheduleList"></div>
+      <button class="booking-btn" id="bookingBtn">Pesan ruangan <span>→</span></button>
+    </div>
+  </aside>
+
+  <!-- ── Booking dialog ── -->
+  <div class="dialog-overlay" id="bookingOverlay"></div>
+  <section class="dialog" id="bookingDialog" role="dialog" aria-modal="true" aria-labelledby="bookingTitle" aria-hidden="true">
+    <button class="close-btn dialog-close" id="bookingClose" aria-label="Tutup formulir">×</button>
+    <p class="eyebrow">RESERVASI SIMULASI</p><h2 id="bookingTitle">Pesan ruangan</h2><p class="muted" id="bookingRoomLabel">Pilih waktu penggunaan ruangan.</p>
+    <form id="bookingForm">
+      <div class="form-grid"><label>Tanggal penggunaan<input id="bookingDate" name="date" type="date" required></label><label>Mulai<select id="startTime" name="startTime" required></select></label><label>Durasi<select id="duration" name="duration"><option value="0.5">30 menit</option><option value="1" selected>1 jam</option><option value="1.5">1,5 jam</option><option value="2">2 jam</option><option value="2.5">2,5 jam</option><option value="3">3 jam</option><option value="3.5">3,5 jam</option><option value="4">4 jam</option><option value="4.5">4,5 jam</option><option value="5">5 jam</option><option value="5.5">5,5 jam</option><option value="6">6 jam</option><option value="7">7 jam</option><option value="8">8 jam</option></select></label><label>Tujuan peminjaman<input id="purpose" name="purpose" maxlength="100" placeholder="Contoh: Diskusi tugas IMK" required></label></div>
+      <label class="full-label">NIM pemesan<input id="ownerNim" name="ownerNim" inputmode="numeric" pattern="[0-9]{8,15}" placeholder="Masukkan NIM" required><span id="nimPemesanInfo" style="font-size:10px;margin-top:4px;"></span></label>
+      <label class="full-label">NIM teman <span class="optional">(opsional, pisahkan dengan koma)</span><textarea id="friendNims" name="friendNims" rows="2" placeholder="Contoh: 23012345678, 23012345679"></textarea></label>
+      <p class="availability-message" id="availabilityMessage" aria-live="polite">Pilih tanggal dan waktu untuk memeriksa jadwal.</p>
+      <button class="booking-btn" id="confirmBooking" type="submit">Buat tiket <span>→</span></button>
+      <p class="form-footnote">Data reservasi disimpan ke database MySQL. NIM pemesan harus terdaftar di sistem.</p>
+    </form>
+  </section>
+
+  <!-- ── Ticket dialog (hasil booking baru) ── -->
+  <section class="ticket-dialog" id="ticketDialog" role="dialog" aria-modal="true" aria-labelledby="ticketTitle" aria-hidden="true">
+    <button class="close-btn dialog-close" id="ticketClose" aria-label="Tutup tiket">×</button>
+    <div class="ticket-success">✓</div><p class="eyebrow">RESERVASI TERSIMPAN KE DATABASE</p><h2 id="ticketTitle">Tiket digital</h2><p class="muted">Tiket reservasi ruangan tersimpan di MySQL.</p>
+    <div class="ticket-card"><div class="ticket-card-head"><div><small>KODE RESERVASI</small><strong id="ticketCode">RT-000000</strong></div><span class="ticket-state">TERKONFIRMASI</span></div>
+      <!-- QR Code nyata: library akan render canvas ke sini -->
+      <div class="qr-wrap"><div id="qrCode" class="qr-code" aria-label="QR Code tiket"></div></div>
+      <div class="ticket-details" id="ticketDetails"></div>
+      <div class="ticket-countdown"><span>WAKTU TERSISA</span><strong id="ticketCountdown">—</strong></div>
+    </div>
+    <div class="ticket-actions"><button class="booking-btn" id="shareTicket">Bagikan ke WhatsApp <span>↗</span></button><button class="secondary-btn" id="finishTicket">Selesai</button></div>
+    <p class="form-footnote">Pengingat 15 menit sebelum waktu selesai berjalan selama halaman terbuka.</p>
+  </section>
+
+  <!-- ── My Tickets dialog ── -->
+  <div class="dialog-overlay" id="myTicketsOverlay" onclick="closeMyTickets()"></div>
+  <section class="dialog my-tickets-dialog" id="myTicketsDialog" role="dialog" aria-modal="true" aria-labelledby="myTicketsTitle" aria-hidden="true">
+    <button class="close-btn dialog-close" id="myTicketsClose" onclick="closeMyTickets()" aria-label="Tutup tiket saya">×</button>
+    <p class="eyebrow">RIWAYAT PEMESANAN</p>
+    <h2 id="myTicketsTitle">🎟️ Tiket Saya</h2>
+    <p class="muted" id="myTicketsNimLabel">—</p>
+    <div id="myTicketsList" class="my-tickets-list">
+      <p class="muted" style="text-align:center;padding:32px 0;">Memuat tiket…</p>
+    </div>
+  </section>
+
+  <!-- ── Login / daftar dialog ── -->
+  <div class="dialog-overlay" id="loginOverlay" onclick="closeLoginDialog()"></div>
+  <section class="dialog login-dialog" id="loginDialog" role="dialog" aria-modal="true" aria-labelledby="loginTitle" aria-hidden="true">
+    <button class="close-btn dialog-close" onclick="closeLoginDialog()" aria-label="Tutup">×</button>
+    <p class="eyebrow">SESI PENGGUNA</p>
+    <h2 id="loginTitle">Masuk dengan NIM</h2>
+    <p class="muted">Masukkan NIM untuk mengisi formulir booking secara otomatis dan melihat tiket Anda.</p>
+    <div class="login-form">
+      <label class="full-label">NIM
+        <input id="loginNimInput" inputmode="numeric" pattern="[0-9]{8,15}" placeholder="Contoh: 23052010001" maxlength="15">
+        <span id="loginNimInfo" style="font-size:11px;margin-top:5px;display:block;"></span>
+      </label>
+      <button class="booking-btn" style="width:100%;margin-top:12px;" onclick="submitLogin()">Masuk <span>→</span></button>
+      <p class="form-footnote" style="margin-top:8px;">NIM harus sudah terdaftar di database RuangTemu. Sesi tersimpan di browser.</p>
+    </div>
+  </section>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+</html>

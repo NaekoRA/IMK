@@ -1,0 +1,13 @@
+id_ruangan,jenis,keterangan,mulai,selesai
+B301,Kelas,Kuliah Pengantar Sistem Informasi,2026-10-12T08:00:00+07:00,2026-10-12T10:00:00+07:00
+B302,Kelas,Kuliah Metode Penelitian,2026-10-12T13:00:00+07:00,2026-10-12T15:00:00+07:00
+B303,Kelas,Kuliah Pemrograman Web,2026-10-12T09:00:00+07:00,2026-10-12T12:00:00+07:00
+B304,Kelas,Kuliah Interaksi Manusia dan Komputer,2026-10-12T15:00:00+07:00,2026-10-12T17:00:00+07:00
+B305,Kelas,Kuliah Basis Data,2026-10-12T10:00:00+07:00,2026-10-12T12:00:00+07:00
+B306,Kelas,Kuliah Matematika Diskrit,2026-10-12T08:00:00+07:00,2026-10-12T09:00:00+07:00
+B307,Kelas,Kuliah Jaringan Komputer,2026-10-12T10:00:00+07:00,2026-10-12T12:00:00+07:00
+B308,Kelas,Kuliah Rekayasa Perangkat Lunak,2026-10-12T13:00:00+07:00,2026-10-12T16:00:00+07:00
+B309,Kelas,Kuliah Statistika,2026-10-12T08:00:00+07:00,2026-10-12T10:00:00+07:00
+B310,Kelas,Kuliah Kecerdasan Buatan,2026-10-12T14:00:00+07:00,2026-10-12T16:00:00+07:00
+B311,Kelas,Kuliah Desain Antarmuka,2026-10-12T11:00:00+07:00,2026-10-12T13:00:00+07:00
+B312,Kelas,Kuliah Sistem Operasi,2026-10-12T16:00:00+07:00,2026-10-12T18:00:00+07:00
