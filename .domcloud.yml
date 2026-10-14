@@ -1,0 +1,11 @@
+source: clear
+features:
+  - node
+  - mysql
+nginx:
+  root: backend/
+  passenger:
+    enabled: "on"
+    app_start_command: node server.js
+commands:
+  - cd backend && npm install
